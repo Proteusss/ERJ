@@ -9,22 +9,23 @@ import numpy as np
 import qdarkstyle
 import string
 import os
-import first_main
+
+
 class Thread(QThread):  # 采用线程来播放视频
 
     changePixmap = pyqtSignal(QtGui.QImage)
     changeList = pyqtSignal(str)
-
+    videoN = ''
     def run(self):
-        cap = cv2.VideoCapture(first_main.videoName)
+        #print(Thread.videoN)
+        cap = cv2.VideoCapture(Thread.videoN)
         qDebug('Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
-        print(first_main.videoName)
         while (cap.isOpened() == True):
             ret, frame = cap.read()
             name_part = 0
             if ret:
                 rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                #cv2.imwrite(os.curdir()+'/out/'+videoName+'_'+str(name_part)+'.jpg', rgbImage)
+                # cv2.imwrite(os.curdir()+'/out/'+videoName+'_'+str(name_part)+'.jpg', rgbImage)
                 time2 = QDateTime.currentDateTimeUtc().toString()
                 # print(np.array(rgbImage).shape)
                 mes = time2 + str(np.array(rgbImage).shape)
@@ -37,3 +38,6 @@ class Thread(QThread):  # 采用线程来播放视频
                 name_part += 1
             else:
                 break
+
+    def setVideoName(self,vName):
+        Thread.videoN = vName
