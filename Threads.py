@@ -1,14 +1,10 @@
 import sys,cv2,time
-from first_ui import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog,QWidget,QMainWindow ,QGraphicsScene
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt,QDateTime,qDebug
 from PyQt5.QtGui import  QPixmap, QImage
-from PyQt5.QtWidgets import QPushButton,QLabel
+
 import numpy as np
-import qdarkstyle
-import string
-import os
+
 
 
 class Thread(QThread):  # 采用线程来播放视频
