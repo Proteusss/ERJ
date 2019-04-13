@@ -79,9 +79,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
         print("got videoName here:",videoName)
-        th1= th.Thread(self)
+        th1= th.Thread1(self)
         th1.setVideoName(videoName)
+        th1.setPeopleLimit(self.video1_limit)
         th1.changePixmap.connect(self.setImage)
+        th1.changeList.connect(self.setList)
         th1.start()
     def video2processing(self):
         print("gogo")
@@ -92,9 +94,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th2 =  th.Thread(self)
+        th2 =  th.Thread2(self)
         th2.setVideoName(videoName)
+        th2.setPeopleLimit(self.video2_limit)
         th2.changePixmap.connect(self.setImage2)
+        th2.changeList.connect(self.setList)
         th2.start()
 
     def video3processing(self):
@@ -106,9 +110,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th3 = th.Thread(self)
+        th3 = th.Thread3(self)
         th3.setVideoName(videoName)
+        th3.setPeopleLimit(self.video3_limit)
         th3.changePixmap.connect(self.setImage3)
+        th3.changeList.connect(self.setList)
         th3.start()
 
     def video4processing(self):
@@ -120,9 +126,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th4 = th.Thread(self)
+        th4 = th.Thread4(self)
         th4.setVideoName(videoName)
+        th4.setPeopleLimit(self.video4_limit)
         th4.changePixmap.connect(self.setImage4)
+        th4.changeList.connect(self.setList)
         th4.start()
 
 
