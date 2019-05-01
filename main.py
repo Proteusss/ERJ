@@ -1,4 +1,5 @@
 import sys,cv2,time
+from threading import Thread, Lock
 from ui import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog,QWidget,QMainWindow ,QGraphicsScene
@@ -6,20 +7,28 @@ from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt,QDateTime,qDebug
 from PyQt5.QtGui import  QPixmap, QImage
 import qdarkstyle
 import Threads as th
-
-
+import numpy as np
+from multiprocessing import  Pipe, Process
+from Config import Config
+import socket
+#import matplotlib.pyplot as plt
 
 videoName = ''
 
 class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 绘制的窗口
 
-    video1_limit = -100
-    video2_limit = -100
-    video3_limit = -100
-    video4_limit = -100
+    parent_conn, child_conn = Pipe()
+    video1_limit = 100
+    video2_limit = 100
+    video3_limit = 100
+    video4_limit = 100
     def __init__(self):
+        self.img_pool = []
         super(mywindow,self).__init__()
         self.setupUi(self)
+        self.init_client()
+        client_th = Thread(target=self.sendimg)
+        client_th.start()
 
 
 
@@ -65,7 +74,8 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         mywindow.video4_limit = int(self.video4_lineEdit.text())
         self.setList(mywindow.video4_limit)
 
-
+    def add_img(self,img):
+        self.img_pool.append(img)
 
 
 
@@ -84,6 +94,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th1.setPeopleLimit(self.video1_limit)
         th1.changePixmap.connect(self.setImage)
         th1.changeList.connect(self.setList)
+        th1.add_img.connect(self.add_img)
         th1.start()
     def video2processing(self):
         print("gogo")
@@ -133,6 +144,47 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th4.changeList.connect(self.setList)
         th4.start()
 
+    def init_client(self):
+        self.encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 15]
+
+        # init config
+        self.config = Config()
+        host = self.config.get("server", "host")
+        port = self.config.get("server", "port")
+        self.address = (host, int(port))
+
+        # init connection
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # self.sock.bind(self.address)
+        except socket.error as msg:
+            print(msg)
+            sys.exit(1)
+
+    def sendimg(self):
+
+        sock = self.sock
+        address = self.address
+        running = True
+        cnt = 0
+        sock.connect(address)
+        while running:
+            while len(self.img_pool) > 0:
+                frame = self.img_pool.pop(0)   # frame ------> bytes
+                sock.send(frame)
+
+                # 还原图片
+                # frame_array = np.frombuffer(frame, dtype=np.uint8)
+                # img = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+                # print(img.shape)
+
+
+
+
+
+
+
 
 
 
@@ -144,9 +196,13 @@ if __name__ == '__main__':
     qDebug('From main thread: %s' % hex(int(QThread.currentThreadId())))
 
     window = mywindow()
-
+    #conn = window.child_conn
+    #NetPro = Process(target=NetProcess,args=(conn,))
     window.setWindowState(QtCore.Qt.WindowMaximized)
     window.show()
+
+
+
 
     sys.exit(app.exec_())
 
