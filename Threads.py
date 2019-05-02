@@ -4,7 +4,8 @@ from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt,QDateTime,qDebug
 from PyQt5.QtGui import  QPixmap, QImage
 import detect as dt
 import numpy as np
-from main import mywindow
+import json
+
 
 
 
@@ -13,14 +14,17 @@ class Thread1(QThread):  # 采用线程来播放视频
     changePixmap = pyqtSignal(QtGui.QImage)
     changeList = pyqtSignal(str)
     changeNum = pyqtSignal(int)
+    add_img = pyqtSignal(bytes)
+    add_res = pyqtSignal(str)
     videoN = ''
     people_num = 0
-    people_limit = -100
+    people_limit = 100
     def run(self):
         #print(Thread.videoN)
         cap = cv2.VideoCapture(Thread1.videoN)
         qDebug('Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         #counter = 0
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 60]
         while (cap.isOpened() == True):
             ret, frame = cap.read()
             name_part = 0
@@ -29,14 +33,42 @@ class Thread1(QThread):  # 采用线程来播放视频
                 # cv2.imwrite(os.curdir()+'/out/'+videoName+'_'+str(name_part)+'.jpg', rgbImage)
                 time2 = QDateTime.currentDateTimeUtc().toString()
                 # print(np.array(rgbImage).shape)
-                mes = time2 + str(np.array(rgbImage).shape)
+                #print(np.array(rgbImage).shape)
                 #self.changeList.emit(mes)
                 convertToQtFormat = QtGui.QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0],
                                                  QImage.Format_RGB888)  # 在这里可以对每帧图像进行处理，
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+
                 Thread1.people_num =dt.detect_img(p)
+
                 self.judge_num()
                 self.changePixmap.emit(p)
+
+                #将检测结果打包放入 结果池中
+                detect_res = {}
+                detect_res['video_idx'] = "video1"
+                detect_res['time'] = time2
+                detect_res['people_num'] = Thread1.people_num
+                detect_res_str = json.dumps(detect_res)
+                self.add_res.emit(detect_res_str)
+
+
+
+
+
+                # 将图片压缩后放入 图片池中
+                #encode_img = cv2.imencode('jpg',rgbImage,[int(cv2.IMWRITE_JPEG_QUALITY), 60])
+                #frame = cv2.flip(frame, 1)
+                result,imencode = cv2.imencode('.jpg', frame, encode_param)
+                imencode = np.array(imencode)
+
+                #img_bytes = imencode.tobytes()
+                img_str = imencode.tostring()
+                #print("in thread:"+str(len(img_bytes))+"  shape:"+str(rgbImage.shape)+" dtype:"+str(rgbImage.dtype)+"\n")
+                #print(img_str)
+                self.add_img.emit(img_str)
+                #self.add_img.emit(img_bytes)
+                #img_str = rgbImage.tolist                用tolist 太慢了!!!
 
                 time.sleep(0.014)  # 控制视频播放的速度
                 name_part += 1
@@ -79,7 +111,7 @@ class Thread2(QThread):  # 采用线程来播放视频
     changeNum = pyqtSignal(int)
     videoN = ''
     people_num = 0
-    people_limit = -100
+    people_limit = 100
 
     def run(self):
         # print(Thread.videoN)
@@ -140,7 +172,7 @@ class Thread3(QThread):  # 采用线程来播放视频
     changeNum = pyqtSignal(int)
     videoN = ''
     people_num = 0
-    people_limit = -100
+    people_limit = 100
 
     def run(self):
         # print(Thread.videoN)
@@ -201,7 +233,7 @@ class Thread4(QThread):  # 采用线程来播放视频
     changeNum = pyqtSignal(int)
     videoN = ''
     people_num = 0
-    people_limit = -100
+    people_limit = 100
 
     def run(self):
         # print(Thread.videoN)

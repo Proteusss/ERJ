@@ -3,6 +3,7 @@ import socket
 import sys
 import numpy as np
 import cv2
+import json
 
 def receive():
     config = Config()
@@ -40,5 +41,33 @@ def receive():
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #     break
 
+def receive2():
+    config = Config()
+    # 初始化连接信息
+    host = config.get("server", "host")
+    port = config.get("server", "res_port")
+    address = (host, int(port))
+
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    sock.bind(address)
+    sock.listen(2)
+    conn, addr = sock.accept()
+
+    bfsize = 46080
+    chuncksize = 46081
+    frame = np.zeros(bfsize * 20, dtype=np.uint8)
+    cnt = 0
+
+    while True:
+        #print("server\n")
+        # start = time.time()#用于计算帧率信息
+        b_data = conn.recv(bfsize)
+        data = str(b_data,encoding="utf-8")
+        res = json.loads(data)
+        print(res)
+        #print("receive res : window_name :"+res['video_idx']+" time:"+res['time']+" result"+res['people_num']+"\n")
+
 if __name__ == '__main__':
-    receive()
+    receive2()

@@ -12,23 +12,27 @@ from multiprocessing import  Pipe, Process
 from Config import Config
 import socket
 #import matplotlib.pyplot as plt
+import json
 
 videoName = ''
 
 class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 绘制的窗口
 
-    parent_conn, child_conn = Pipe()
     video1_limit = 100
     video2_limit = 100
     video3_limit = 100
     video4_limit = 100
     def __init__(self):
         self.img_pool = []
+        self.res_pool = []
         super(mywindow,self).__init__()
         self.setupUi(self)
-        self.init_client()
+        self.init_img_client()
         client_th = Thread(target=self.sendimg)
-        client_th.start()
+        #client_th.start()
+        self.init_res_client()
+        res_client_th = Thread(target=self.sendres)
+        res_client_th.start()
 
 
 
@@ -77,7 +81,8 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
     def add_img(self,img):
         self.img_pool.append(img)
 
-
+    def add_res(self,res):
+        self.res_pool.append(res)
 
 #-----------------开始检测的槽函数
     def video1processing(self):
@@ -95,6 +100,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th1.changePixmap.connect(self.setImage)
         th1.changeList.connect(self.setList)
         th1.add_img.connect(self.add_img)
+        th1.add_res.connect(self.add_res)
         th1.start()
     def video2processing(self):
         print("gogo")
@@ -144,19 +150,19 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th4.changeList.connect(self.setList)
         th4.start()
 
-    def init_client(self):
-        self.encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 15]
+    def init_img_client(self):
+
 
         # init config
         self.config = Config()
         host = self.config.get("server", "host")
-        port = self.config.get("server", "port")
-        self.address = (host, int(port))
+        port = self.config.get("server", "img_port")
+        self.img_address = (host, int(port))
 
         # init connection
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.img_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)             #UDP 方式
+            self.img_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # self.sock.bind(self.address)
         except socket.error as msg:
             print(msg)
@@ -164,15 +170,15 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 
     def sendimg(self):
 
-        sock = self.sock
-        address = self.address
+        img_sock = self.img_sock
+        img_address = self.address
         running = True
         cnt = 0
-        sock.connect(address)
+        img_sock.connect(img_address)
         while running:
             while len(self.img_pool) > 0:
                 frame = self.img_pool.pop(0)   # frame ------> bytes
-                sock.send(frame)
+                img_sock.send(frame)
 
                 # 还原图片
                 # frame_array = np.frombuffer(frame, dtype=np.uint8)
@@ -180,7 +186,35 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                 # print(img.shape)
 
 
+    def init_res_client(self):
+        self.config = Config()
+        host = self.config.get("server", "host")
+        port = self.config.get("server", "res_port")
+        self.res_address = (host, int(port))
+        print(self.res_address)
 
+        # init connection
+        try:
+            self.res_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # TCP 方式
+
+            # self.sock.bind(self.address)
+        except socket.error as msg:
+            print(msg)
+            sys.exit(1)
+
+
+    def sendres(self):
+
+        res_sock = self.res_sock
+        res_address = self.res_address
+        running = True
+        cnt = 0
+        res_sock.connect(res_address)
+        while running:
+            while len(self.res_pool) > 0:
+                res = self.res_pool.pop(0)
+                b_res = bytes(res,encoding="utf-8")
+                res_sock.send(b_res)
 
 
 
