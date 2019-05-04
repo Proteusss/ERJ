@@ -18,18 +18,29 @@ videoName = ''
 
 class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 绘制的窗口
 
-    video1_limit = 100
-    video2_limit = 100
-    video3_limit = 100
-    video4_limit = 100
+    # video1_limit = 100
+    # video2_limit = 100
+    # video3_limit = 100
+    # video4_limit = 100
     def __init__(self):
+
+        super(mywindow,self).__init__()
+        self.video1_limit = 100
+        self.video2_limit = 100
+        self.video3_limit = 100
+        self.video4_limit = 100
+
+        self.video1_current_num = -1
+        self.video2_current_num = -1
+        self.video3_current_num = -1
+        self.video4_current_num = -1
+
         self.img_pool = []
         self.res_pool = []
-        super(mywindow,self).__init__()
         self.setupUi(self)
         self.init_img_client()
-        client_th = Thread(target=self.sendimg)
-        #client_th.start()
+        img_client_th = Thread(target=self.sendimg)
+        #img_client_th.start()
         self.init_res_client()
         res_client_th = Thread(target=self.sendres)
         res_client_th.start()
@@ -39,8 +50,10 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 #---------------程序消息通知
     def setList(self, tp):
         self.alertlistView.addItem(str(tp))
-        print(mywindow.video1_limit)
+        #print(mywindow.video1_limit)
 
+    def updateNum(self):
+        self.numlistView.setMo
 
 #---------------更新图片的槽函数
     def setImage(self, image):
@@ -66,17 +79,30 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 
 #---------------设置阈值的槽函数
     def set_video1_limit(self):
-        mywindow.video1_limit = int(self.video1_lineEdit.text())
-        self.setList(mywindow.video1_limit)
+        self.video1_limit = int(self.video1_lineEdit.text())
+        self.setList(self.video1_limit)
     def set_video2_limit(self):
-        mywindow.video2_limit = int(self.video2_lineEdit.text())
-        self.setList(mywindow.video2_limit)
+        self.video2_limit = int(self.video2_lineEdit.text())
+        self.setList(self.video2_limit)
     def set_video3_limit(self):
-        mywindow.video3_limit = int(self.video3_lineEdit.text())
-        self.setList(mywindow.video3_limit)
+        self.video3_limit = int(self.video3_lineEdit.text())
+        self.setList(self.video3_limit)
     def set_video4_limit(self):
-        mywindow.video4_limit = int(self.video4_lineEdit.text())
-        self.setList(mywindow.video4_limit)
+        self.video4_limit = int(self.video4_lineEdit.text())
+        self.setList(self.video4_limit)
+
+
+    #----------实时改变人数
+    def change_video1_num(self,num):
+        self.video1_current_num = num
+    def change_video2_num(self,num):
+        self.video2_current_num = num
+    def change_video3_num(self,num):
+        self.video3_current_num = num
+    def change_video4_num(self,num):
+        self.video4_current_num = num
+
+
 
     def add_img(self,img):
         self.img_pool.append(img)
@@ -86,24 +112,26 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 
 #-----------------开始检测的槽函数
     def video1processing(self):
-        print("gogo1")
+        #print("gogo1")
         global videoName
         videoName, videoType = QFileDialog.getOpenFileName(self,
                                                            "打开视频",
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        print("got videoName here:",videoName)
+        #print("got videoName here:",videoName)
         th1= th.Thread1(self)
         th1.setVideoName(videoName)
         th1.setPeopleLimit(self.video1_limit)
         th1.changePixmap.connect(self.setImage)
         th1.changeList.connect(self.setList)
+        th1.changeNum.connect(self.change_video1_num)
         th1.add_img.connect(self.add_img)
         th1.add_res.connect(self.add_res)
+
         th1.start()
     def video2processing(self):
-        print("gogo")
+        #print("gogo")
 
         global videoName  # 在这里设置全局变量以便在线程中使用
         videoName, videoType = QFileDialog.getOpenFileName(self,
@@ -116,10 +144,13 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th2.setPeopleLimit(self.video2_limit)
         th2.changePixmap.connect(self.setImage2)
         th2.changeList.connect(self.setList)
+        th2.changeNum.connect(self.change_video2_num)
+        th2.add_img.connect(self.add_img)
+        th2.add_res.connect(self.add_res)
         th2.start()
 
     def video3processing(self):
-        print("gogo")
+        #print("gogo")
 
         global videoName  # 在这里设置全局变量以便在线程中使用
         videoName, videoType = QFileDialog.getOpenFileName(self,
@@ -132,10 +163,13 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th3.setPeopleLimit(self.video3_limit)
         th3.changePixmap.connect(self.setImage3)
         th3.changeList.connect(self.setList)
+        th3.changeNum.connect(self.change_video3_num)
+        th3.add_img.connect(self.add_img)
+        th3.add_res.connect(self.add_res)
         th3.start()
 
     def video4processing(self):
-        print("gogo")
+        #print("gogo")
 
         global videoName  # 在这里设置全局变量以便在线程中使用
         videoName, videoType = QFileDialog.getOpenFileName(self,
@@ -148,8 +182,14 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th4.setPeopleLimit(self.video4_limit)
         th4.changePixmap.connect(self.setImage4)
         th4.changeList.connect(self.setList)
+        th4.changeNum.connect(self.change_video4_num)
+        th4.add_img.connect(self.add_img)
+        th4.add_res.connect(self.add_res)
         th4.start()
 
+
+
+    #初始化 图像传输连接  UDP连接
     def init_img_client(self):
 
 
@@ -167,11 +207,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         except socket.error as msg:
             print(msg)
             sys.exit(1)
-
+    #为图像传输线程编写执行函数
     def sendimg(self):
 
         img_sock = self.img_sock
-        img_address = self.address
+        img_address = self.img_address
         running = True
         cnt = 0
         img_sock.connect(img_address)
@@ -185,7 +225,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                 # img = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
                 # print(img.shape)
 
-
+    #初始化传输测试结果传输连接   TCP 连接
     def init_res_client(self):
         self.config = Config()
         host = self.config.get("server", "host")
