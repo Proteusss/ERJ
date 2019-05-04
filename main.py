@@ -39,15 +39,17 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.res_pool = []
         self.setupUi(self)
         self.init_img_client()
-        img_client_th = Thread(target=self.sendimg)
-        #img_client_th.start()
+        # img_client_th = Thread(target=self.sendimg)
+        # img_client_th.start()
+        img_client_p = Process(target=self.sendimg)
+        img_client_p.start()
         self.init_res_client()
-        res_client_th = Thread(target=self.sendres)
-        res_client_th.start()
+        # res_client_th = Thread(target=self.sendres)
+        # res_client_th.start()
+        res_client_p = Process(target=self.sendres)
+        res_client_p.start()
 
-
-
-#---------------程序消息通知
+    #---------------程序消息通知
     def setList(self, tp):
         self.alertlistView.addItem(str(tp))
         #print(mywindow.video1_limit)
@@ -215,10 +217,11 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         running = True
         cnt = 0
         img_sock.connect(img_address)
+        qDebug('sendimg Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         while running:
             while len(self.img_pool) > 0:
                 frame = self.img_pool.pop(0)   # frame ------> bytes
-                img_sock.send(frame)
+                img_sock.sendto(frame,img_address)
 
                 # 还原图片
                 # frame_array = np.frombuffer(frame, dtype=np.uint8)
@@ -250,6 +253,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         running = True
         cnt = 0
         res_sock.connect(res_address)
+        qDebug('sendres Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         while running:
             while len(self.res_pool) > 0:
                 res = self.res_pool.pop(0)

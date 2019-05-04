@@ -4,12 +4,13 @@ import sys
 import numpy as np
 import cv2
 import json
+from threading import Thread
 
 def receive():
     config = Config()
     # 初始化连接信息
     host = config.get("server", "host")
-    port = config.get("server", "port")
+    port = config.get("server", "img_port")
     address = (host, int(port))
 
 
@@ -30,7 +31,7 @@ def receive():
         frame_array = np.frombuffer(data, dtype=np.uint8)
         img = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
         #print(img)
-        cv2.imshow("receive_frame", img)
+        #cv2.imshow("receive_frame", img)
         # i = int.from_bytes(data[-1:], byteorder='big')
         # line_data = numpy.frombuffer(data[:-1], dtype=numpy.uint8)
         # frame[i * 46080:(i + 1) * 46080] = line_data
@@ -66,8 +67,11 @@ def receive2():
         b_data = conn.recv(bfsize)
         data = str(b_data,encoding="utf-8")
         res = json.loads(data)
-        print(res)
+        #print(res)
         #print("receive res : window_name :"+res['video_idx']+" time:"+res['time']+" result"+res['people_num']+"\n")
 
 if __name__ == '__main__':
-    receive2()
+    th1 = Thread(target=receive)
+    th2 = Thread(target=receive2)
+    th1.start()
+    th2.start()
