@@ -25,11 +25,14 @@ def receive():
 
     while True:
         #print("server\n")
-        # start = time.time()#用于计算帧率信息
+        # start = time.time()
         cnt += 1
         data, addr = sock.recvfrom(chuncksize)
         frame_array = np.frombuffer(data, dtype=np.uint8)
         img = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+
+
+        #print(img.shape)
         #print(img)
         #cv2.imshow("receive_frame", img)
         # i = int.from_bytes(data[-1:], byteorder='big')
@@ -67,7 +70,7 @@ def receive2():
         b_data = conn.recv(bfsize)
         data = str(b_data,encoding="utf-8")
         res = json.loads(data)
-        #print(res)
+        print(res)
         #print("receive res : window_name :"+res['video_idx']+" time:"+res['time']+" result"+res['people_num']+"\n")
 
 if __name__ == '__main__':

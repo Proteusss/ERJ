@@ -7,7 +7,7 @@ import numpy as np
 import json
 
 
-sleep_time = 0.01
+sleep_time = 0.05
 freq = 50
 
 class Thread1(QThread):  # 采用线程来播放视频

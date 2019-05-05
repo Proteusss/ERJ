@@ -35,18 +35,22 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.video3_current_num = -1
         self.video4_current_num = -1
 
+        self.img_pipe_send ,self.img_pipe_recv= Pipe()
+        self.res_pipe_send, self.res_pipe_recv =Pipe()
+
         self.img_pool = []
         self.res_pool = []
         self.setupUi(self)
         self.init_img_client()
         # img_client_th = Thread(target=self.sendimg)
         # img_client_th.start()
-        img_client_p = Process(target=self.sendimg)
+        img_client_p = Process(target=self.sendimg,args=(self.img_pipe_recv,))
         img_client_p.start()
+
         self.init_res_client()
         # res_client_th = Thread(target=self.sendres)
         # res_client_th.start()
-        res_client_p = Process(target=self.sendres)
+        res_client_p = Process(target=self.sendres,args=(self.res_pipe_recv,))
         res_client_p.start()
 
     #---------------程序消息通知
@@ -107,10 +111,12 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 
 
     def add_img(self,img):
-        self.img_pool.append(img)
+        #self.img_pool.append(img)
+        self.img_pipe_send.send_bytes(img)
 
     def add_res(self,res):
-        self.res_pool.append(res)
+        #self.res_pool.append(res)
+        self.res_pipe_send.send(res)
 
 #-----------------开始检测的槽函数
     def video1processing(self):
@@ -210,7 +216,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
             print(msg)
             sys.exit(1)
     #为图像传输线程编写执行函数
-    def sendimg(self):
+    def sendimg(self,pipe):
 
         img_sock = self.img_sock
         img_address = self.img_address
@@ -219,9 +225,14 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         img_sock.connect(img_address)
         qDebug('sendimg Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         while running:
-            while len(self.img_pool) > 0:
-                frame = self.img_pool.pop(0)   # frame ------> bytes
-                img_sock.sendto(frame,img_address)
+            frame = pipe.recv_bytes(46081)
+            img_sock.sendto(frame,img_address)
+
+            # while len(self.img_pool) > 0:
+            #     frame = self.img_pool.pop(0)   # frame ------> bytes
+            #     print("send img")
+            #     img_sock.sendto(frame,img_address)
+            #
 
                 # 还原图片
                 # frame_array = np.frombuffer(frame, dtype=np.uint8)
@@ -246,7 +257,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
             sys.exit(1)
 
 
-    def sendres(self):
+    def sendres(self,pipe):
 
         res_sock = self.res_sock
         res_address = self.res_address
@@ -255,10 +266,17 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         res_sock.connect(res_address)
         qDebug('sendres Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         while running:
-            while len(self.res_pool) > 0:
-                res = self.res_pool.pop(0)
-                b_res = bytes(res,encoding="utf-8")
-                res_sock.send(b_res)
+
+            # while len(self.res_pool) > 0:
+            #     print("have something")
+            #     res = self.res_pool.pop(0)
+            #     b_res = bytes(res,encoding="utf-8")
+            #     print("send res")
+            #     res_sock.send(b_res)
+            res = pipe.recv()
+            b_res = bytes(res, encoding="utf-8")
+            #print("send res")
+            res_sock.send(b_res)
 
 
 
