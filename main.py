@@ -8,14 +8,16 @@ from PyQt5.QtGui import  QPixmap, QImage
 import qdarkstyle
 import Threads as th
 import numpy as np
-from multiprocessing import  Pipe, Process
+from multiprocessing import  Pipe, Process, Queue
 from Config import Config
 import socket
 #import matplotlib.pyplot as plt
 import json
+import os
 
 videoName = ''
-
+img_queue = Queue(100)
+res_queue = Queue(100)
 class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 绘制的窗口
 
     # video1_limit = 100
@@ -38,6 +40,8 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.img_pipe_send ,self.img_pipe_recv= Pipe()
         self.res_pipe_send, self.res_pipe_recv =Pipe()
 
+        #self.img_queue = Queue(100)
+
         # self.img_pool = []
         # self.res_pool = []
 
@@ -45,14 +49,14 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.init_img_client()
         # img_client_th = Thread(target=self.sendimg)
         # img_client_th.start()
-        img_client_p = Process(target=self.sendimg,args=(self.img_pipe_recv,))
-        img_client_p.start()
+        #img_client_p = Process(target=self.sendimg,args=(self.img_queue,))
+        #img_client_p.start()
 
         self.init_res_client()
         # res_client_th = Thread(target=self.sendres)
         # res_client_th.start()
-        res_client_p = Process(target=self.sendres,args=(self.res_pipe_recv,))
-        res_client_p.start()
+        # res_client_p = Process(target=self.sendres,args=(self.res_pipe_recv,))
+        # res_client_p.start()
 
     #---------------程序消息通知
     def setList(self, tp):
@@ -114,11 +118,15 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
 
     def add_img(self,img):
         #self.img_pool.append(img)
-        self.img_pipe_send.send_bytes(img)
+        #self.img_pipe_send.send_bytes(img)
+        global img_queue
+        img_queue.put(img,block=False)
 
     def add_res(self,res):
         #self.res_pool.append(res)
-        self.res_pipe_send.send(res)
+        #self.res_pipe_send.send(res)
+        global res_queue
+        res_queue.put(res, block=False)
 
 #-----------------开始检测的槽函数
     def video1processing(self):
@@ -219,7 +227,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
             print(msg)
             sys.exit(1)
     #为图像传输线程编写执行函数
-    def sendimg(self,pipe):
+    def sendimg(self,img_queue):
 
         img_sock = self.img_sock
         img_address = self.img_address
@@ -228,7 +236,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         img_sock.connect(img_address)
         qDebug('sendimg Worker.on_timeout get called from: %s' % hex(int(QThread.currentThreadId())))
         while running:
-            frame = pipe.recv_bytes(46081)
+            frame = img_queue.get()
             img_sock.sendto(frame,img_address)
 
             # while len(self.img_pool) > 0:
@@ -282,10 +290,33 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
             res_sock.send(b_res)
 
 
+def send_Img(window):
+    img_sock = window.img_sock
+    img_address = window.img_address
+    running = True
+    cnt = 0
+    img_sock.connect(img_address)
+    qDebug('sendimg process id: %s' % hex(int(os.getpid())))
+    while running:
+        global img_queue
+        frame = img_queue.get()
+        img_sock.sendto(frame, img_address)
 
 
 
-
+def send_Res(window):
+    res_sock = window.res_sock
+    res_address = window.res_address
+    running = True
+    cnt = 0
+    res_sock.connect(res_address)
+    qDebug('sendres process id: %s' % hex(int(os.getpid())))
+    while running:
+        global res_queue
+        res = res_queue.get()
+        b_res = bytes(res, encoding="utf-8")
+        # print("send res")
+        res_sock.send(b_res)
 
 
 if __name__ == '__main__':
@@ -299,8 +330,13 @@ if __name__ == '__main__':
     #NetPro = Process(target=NetProcess,args=(conn,))
     window.setWindowState(QtCore.Qt.WindowMaximized)
     window.show()
+    #print(window.img_sock)
 
+    img_client_p = Process(target=send_Img, args=(window,))
+    img_client_p.start()
 
+    res_client_p = Process(target=send_Res, args=(window,))
+    res_client_p.start()
 
 
     sys.exit(app.exec_())
