@@ -33,7 +33,7 @@ def receive():
 
 
         #print(img.shape)
-        #print(img)
+        print(img)
         #cv2.imshow("receive_frame", img)
         # i = int.from_bytes(data[-1:], byteorder='big')
         # line_data = numpy.frombuffer(data[:-1], dtype=numpy.uint8)

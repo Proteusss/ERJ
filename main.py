@@ -38,8 +38,9 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.img_pipe_send ,self.img_pipe_recv= Pipe()
         self.res_pipe_send, self.res_pipe_recv =Pipe()
 
-        self.img_pool = []
-        self.res_pool = []
+        # self.img_pool = []
+        # self.res_pool = []
+
         self.setupUi(self)
         self.init_img_client()
         # img_client_th = Thread(target=self.sendimg)
@@ -59,7 +60,8 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         #print(mywindow.video1_limit)
 
     def updateNum(self):
-        self.numlistView.setMo
+        #self.numlistView.setMo
+        pass
 
 #---------------更新图片的槽函数
     def setImage(self, image):
@@ -131,6 +133,7 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         th1= th.Thread1(self)
         th1.setVideoName(videoName)
         th1.setPeopleLimit(self.video1_limit)
+        th1.setSize(self.video1_graphicsView.width(),self.video1_graphicsView.height())
         th1.changePixmap.connect(self.setImage)
         th1.changeList.connect(self.setList)
         th1.changeNum.connect(self.change_video1_num)

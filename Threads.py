@@ -5,10 +5,13 @@ from PyQt5.QtGui import  QPixmap, QImage
 import detect as dt
 import numpy as np
 import json
+from main import mywindow
 
-
-sleep_time = 0.05
+sleep_time = 0.025
 freq = 50
+
+
+
 
 class Thread1(QThread):  # 采用线程来播放视频
     flag = True
@@ -20,6 +23,8 @@ class Thread1(QThread):  # 采用线程来播放视频
     videoN = ''
     people_num = 0
     people_limit = 100
+    width = 0
+    height = 0
     def run(self):
         #print(Thread.videoN)
         cap = cv2.VideoCapture(Thread1.videoN)
@@ -73,7 +78,9 @@ class Thread1(QThread):  # 采用线程来播放视频
 
 
                 put_text = "people:"+str(Thread1.people_num)
-                img_with_num = cv2.putText(rgbImage,put_text,(350,30),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,0),1)
+                image_h,image_w,image_c = rgbImage.shape
+                line_size,line_wid= judgeSize(image_w)
+                img_with_num = cv2.putText(rgbImage,put_text,(int(image_w*0.8),int(image_h*0.1)),cv2.FONT_HERSHEY_COMPLEX,line_size,(255,0,0),line_wid,lineType=cv2.LINE_4)
                 img_convertToQtFormat = QtGui.QImage(img_with_num.data, img_with_num.shape[1], img_with_num.shape[0],
                                                  QImage.Format_RGB888)  # 在这里可以对每帧图像进行处理，
                 p_with_num = img_convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
@@ -114,6 +121,12 @@ class Thread1(QThread):  # 采用线程来播放视频
                 self.changeList.emit(mes)
                 Thread1.flag = True
                 pass
+    def setSize(self,wid,hei):
+        Thread1.width = wid
+        Thread1.height = hei
+
+
+
 
 
 class Thread2(QThread):  # 采用线程来播放视频
@@ -171,7 +184,11 @@ class Thread2(QThread):  # 采用线程来播放视频
 
 
                 put_text = "people:" + str(Thread2.people_num)
-                img_with_num = cv2.putText(rgbImage, put_text, (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+                image_h, image_w, image_c = rgbImage.shape
+                line_size, line_wid = judgeSize(image_w)
+                img_with_num = cv2.putText(rgbImage, put_text, (int(image_w * 0.8), int(image_h * 0.1)),
+                                           cv2.FONT_HERSHEY_COMPLEX, line_size, (255, 0, 0), line_wid,
+                                           lineType=cv2.LINE_4)
                 img_convertToQtFormat = QtGui.QImage(img_with_num.data, img_with_num.shape[1], img_with_num.shape[0],
                                                      QImage.Format_RGB888)  # 在这里可以对每帧图像进行处理，
                 p_with_num = img_convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
@@ -268,7 +285,12 @@ class Thread3(QThread):  # 采用线程来播放视频
                     self.add_img.emit(img_str)
 
                 put_text = "people:" + str(Thread3.people_num)
-                img_with_num = cv2.putText(rgbImage, put_text, (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+                image_h, image_w, image_c = rgbImage.shape
+                line_size, line_wid = judgeSize(image_w)
+                img_with_num = cv2.putText(rgbImage, put_text, (int(image_w * 0.8), int(image_h * 0.1)),
+                                           cv2.FONT_HERSHEY_COMPLEX, line_size, (255, 0, 0), line_wid,
+                                           lineType=cv2.LINE_4)
+
                 img_convertToQtFormat = QtGui.QImage(img_with_num.data, img_with_num.shape[1], img_with_num.shape[0],
                                                      QImage.Format_RGB888)  # 在这里可以对每帧图像进行处理，
                 p_with_num = img_convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
@@ -361,7 +383,11 @@ class Thread4(QThread):  # 采用线程来播放视频
                     self.add_img.emit(img_str)
 
                 put_text = "people:" + str(Thread4.people_num)
-                img_with_num = cv2.putText(rgbImage, put_text, (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+                image_h, image_w, image_c = rgbImage.shape
+                line_size, line_wid = judgeSize(image_w)
+                img_with_num = cv2.putText(rgbImage, put_text, (int(image_w * 0.8), int(image_h * 0.1)),
+                                           cv2.FONT_HERSHEY_COMPLEX, line_size, (255, 0, 0), line_wid,
+                                           lineType=cv2.LINE_4)
                 img_convertToQtFormat = QtGui.QImage(img_with_num.data, img_with_num.shape[1], img_with_num.shape[0],
                                                      QImage.Format_RGB888)  # 在这里可以对每帧图像进行处理，
                 p_with_num = img_convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
@@ -403,6 +429,17 @@ class Thread4(QThread):  # 采用线程来播放视频
                 Thread4.flag = True
                 pass
 
+
+
+def judgeSize( w):
+    if (w <= 960):
+        return 0.5,1
+    elif (w <= 1944):
+        return 1.5,2
+    elif (w <= 2080):
+        return 2,3
+    else:
+        return 2.5,4
 
 class SendThread(QThread):#采用线程来发送消息
 
