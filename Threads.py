@@ -431,6 +431,9 @@ class Thread4(QThread):  # 采用线程来播放视频
 
 
 
+
+
+
 def judgeSize( w):
     if (w <= 960):
         return 0.5,1

@@ -7,6 +7,7 @@ from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt,QDateTime,qDebug
 from PyQt5.QtGui import  QPixmap, QImage
 import qdarkstyle
 import Threads as th
+import Sperate_Threads as st
 import numpy as np
 from multiprocessing import  Pipe, Process, Queue
 from Config import Config
@@ -89,6 +90,22 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
         self.video4_graphicsView.setScene(scene)
 
 
+    def setNum1(self, num):
+        text = "people : "+str(num)
+        self.video1_numLabel.setText(text)
+
+    def setNum2(self, num):
+        text = "people : "+str(num)
+        self.video2_numLabel.setText(text)
+
+    def setNum3(self, num):
+        text = "people : "+str(num)
+        self.video3_numLabel.setText(text)
+
+    def setNum4(self, num):
+        text = "people : "+str(num)
+        self.video4_numLabel.setText(text)
+
 #---------------设置阈值的槽函数
     def set_video1_limit(self):
         self.video1_limit = int(self.video1_lineEdit.text())
@@ -138,17 +155,34 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
         #print("got videoName here:",videoName)
-        th1= th.Thread1(self)
-        th1.setVideoName(videoName)
-        th1.setPeopleLimit(self.video1_limit)
-        th1.setSize(self.video1_graphicsView.width(),self.video1_graphicsView.height())
-        th1.changePixmap.connect(self.setImage)
-        th1.changeList.connect(self.setList)
-        th1.changeNum.connect(self.change_video1_num)
-        th1.add_img.connect(self.add_img)
-        th1.add_res.connect(self.add_res)
+        # th1= th.Thread1(self)
+        # th1.setVideoName(videoName)
+        # th1.setPeopleLimit(self.video1_limit)
+        # th1.setSize(self.video1_graphicsView.width(),self.video1_graphicsView.height())
+        # th1.changePixmap.connect(self.setImage)
+        # th1.changeList.connect(self.setList)
+        # th1.changeNum.connect(self.change_video1_num)
+        # th1.add_img.connect(self.add_img)
+        # th1.add_res.connect(self.add_res)
+        #
+        # th1.start()
 
-        th1.start()
+        ui_th = st.videoUIThread(self)
+        detect_th = st.videoDetectThread(self)
+        ui_th.setVideoName(videoName)
+        ui_th.changePixmap.connect(self.setImage)
+        ui_th.detectImg.connect(detect_th.detectFun)
+        ui_th.start()
+        detect_th.setVideoInd("video1")
+        detect_th.setPeopleLimit(self.video1_limit)
+        detect_th.add_img.connect(self.add_img)
+        detect_th.add_res.connect(self.add_res)
+        detect_th.set_num.connect(self.setNum1)
+        detect_th.start()
+
+
+
+
     def video2processing(self):
         #print("gogo")
 
@@ -158,15 +192,28 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th2 =  th.Thread2(self)
-        th2.setVideoName(videoName)
-        th2.setPeopleLimit(self.video2_limit)
-        th2.changePixmap.connect(self.setImage2)
-        th2.changeList.connect(self.setList)
-        th2.changeNum.connect(self.change_video2_num)
-        th2.add_img.connect(self.add_img)
-        th2.add_res.connect(self.add_res)
-        th2.start()
+        # th2 =  th.Thread2(self)
+        # th2.setVideoName(videoName)
+        # th2.setPeopleLimit(self.video2_limit)
+        # th2.changePixmap.connect(self.setImage2)
+        # th2.changeList.connect(self.setList)
+        # th2.changeNum.connect(self.change_video2_num)
+        # th2.add_img.connect(self.add_img)
+        # th2.add_res.connect(self.add_res)
+        # th2.start()
+
+        ui_th = st.videoUIThread(self)
+        detect_th = st.videoDetectThread(self)
+        ui_th.setVideoName(videoName)
+        ui_th.changePixmap.connect(self.setImage2)
+        ui_th.detectImg.connect(detect_th.detectFun)
+        ui_th.start()
+        detect_th.setVideoInd("video2")
+        detect_th.setPeopleLimit(self.video2_limit)
+        detect_th.add_img.connect(self.add_img)
+        detect_th.add_res.connect(self.add_res)
+        detect_th.set_num.connect(self.setNum2)
+        detect_th.start()
 
     def video3processing(self):
         #print("gogo")
@@ -177,15 +224,28 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th3 = th.Thread3(self)
-        th3.setVideoName(videoName)
-        th3.setPeopleLimit(self.video3_limit)
-        th3.changePixmap.connect(self.setImage3)
-        th3.changeList.connect(self.setList)
-        th3.changeNum.connect(self.change_video3_num)
-        th3.add_img.connect(self.add_img)
-        th3.add_res.connect(self.add_res)
-        th3.start()
+        # th3 = th.Thread3(self)
+        # th3.setVideoName(videoName)
+        # th3.setPeopleLimit(self.video3_limit)
+        # th3.changePixmap.connect(self.setImage3)
+        # th3.changeList.connect(self.setList)
+        # th3.changeNum.connect(self.change_video3_num)
+        # th3.add_img.connect(self.add_img)
+        # th3.add_res.connect(self.add_res)
+        # th3.start()
+
+        ui_th = st.videoUIThread(self)
+        detect_th = st.videoDetectThread(self)
+        ui_th.setVideoName(videoName)
+        ui_th.changePixmap.connect(self.setImage3)
+        ui_th.detectImg.connect(detect_th.detectFun)
+        ui_th.start()
+        detect_th.setVideoInd("video3")
+        detect_th.setPeopleLimit(self.video3_limit)
+        detect_th.add_img.connect(self.add_img)
+        detect_th.add_res.connect(self.add_res)
+        detect_th.set_num.connect(self.setNum3)
+        detect_th.start()
 
     def video4processing(self):
         #print("gogo")
@@ -196,17 +256,28 @@ class mywindow(QMainWindow,Ui_MainWindow): #这个窗口继承了用QtDesignner 
                                                            "",
                                                            # " *.jpg;;*.png;;*.jpeg;;*.bmp")
                                                            " *.mov;;*.mp4;;*.avi;;All Files (*)")
-        th4 = th.Thread4(self)
-        th4.setVideoName(videoName)
-        th4.setPeopleLimit(self.video4_limit)
-        th4.changePixmap.connect(self.setImage4)
-        th4.changeList.connect(self.setList)
-        th4.changeNum.connect(self.change_video4_num)
-        th4.add_img.connect(self.add_img)
-        th4.add_res.connect(self.add_res)
-        th4.start()
+        # th4 = th.Thread4(self)
+        # th4.setVideoName(videoName)
+        # th4.setPeopleLimit(self.video4_limit)
+        # th4.changePixmap.connect(self.setImage4)
+        # th4.changeList.connect(self.setList)
+        # th4.changeNum.connect(self.change_video4_num)
+        # th4.add_img.connect(self.add_img)
+        # th4.add_res.connect(self.add_res)
+        # th4.start()
 
-
+        ui_th = st.videoUIThread(self)
+        detect_th = st.videoDetectThread(self)
+        ui_th.setVideoName(videoName)
+        ui_th.changePixmap.connect(self.setImage4)
+        ui_th.detectImg.connect(detect_th.detectFun)
+        ui_th.start()
+        detect_th.setVideoInd("video4")
+        detect_th.setPeopleLimit(self.video4_limit)
+        detect_th.add_img.connect(self.add_img)
+        detect_th.add_res.connect(self.add_res)
+        detect_th.set_num.connect(self.setNum4)
+        detect_th.start()
 
     #初始化 图像传输连接  UDP连接
     def init_img_client(self):
