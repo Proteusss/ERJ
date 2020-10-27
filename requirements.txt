@@ -4,7 +4,7 @@ bcloud==3.9.0
 beautifulsoup4==4.6.0
 certifi==2018.1.18
 chardet==3.0.4
-cryptography==2.1.4
+cryptography==3.2
 cssselect==1.0.3
 cupshelpers==1.0
 cycler==0.10.0
